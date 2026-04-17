@@ -86,6 +86,33 @@ function appendEvent(event) {
   fs.appendFileSync(EVENTS_FILE, `${JSON.stringify(event)}\n`, "utf8");
 }
 
+function extractTrustedHeaders(req) {
+  return {
+    "x-forwarded-for": req.headers["x-forwarded-for"] || "",
+    "x-real-ip": req.headers["x-real-ip"] || "",
+    "cf-ipcountry": req.headers["cf-ipcountry"] || "",
+    "x-country": req.headers["x-country"] || "",
+    "x-geo-country": req.headers["x-geo-country"] || "",
+    "x-region": req.headers["x-region"] || "",
+    "x-geo-region": req.headers["x-geo-region"] || "",
+    "x-city": req.headers["x-city"] || "",
+    "x-geo-city": req.headers["x-geo-city"] || "",
+    "x-asn": req.headers["x-asn"] || "",
+    "x-geo-asn": req.headers["x-geo-asn"] || "",
+    "x-org": req.headers["x-org"] || "",
+    "x-geo-org": req.headers["x-geo-org"] || "",
+    "x-isp": req.headers["x-isp"] || "",
+    "x-geo-isp": req.headers["x-geo-isp"] || "",
+  };
+}
+
+function normalizeHeaderValue(value) {
+  if (Array.isArray(value)) {
+    return value.filter(Boolean).join(", ");
+  }
+  return value ? String(value) : "";
+}
+
 function dossierToMarkdown(dossier) {
   const indicators = dossier.indicators
     .map((indicator) => `- ${indicator.type}: ${indicator.value}`)
@@ -114,6 +141,18 @@ function dossierToMarkdown(dossier) {
     `- Referrer path: ${dossier.evidence.referrer_path || "n/a"}`,
     `- Campaign token present: ${dossier.evidence.campaign_token_present}`,
     `- Observed at: ${dossier.evidence.observed_at}`,
+    "",
+    "## Network",
+    `- Remote address: ${dossier.evidence.network.remote_address || "n/a"}`,
+    `- Forwarded for: ${dossier.evidence.network.forwarded_for || "n/a"}`,
+    `- Real IP: ${dossier.evidence.network.real_ip || "n/a"}`,
+    `- Geo source: ${dossier.evidence.network.geo.source}`,
+    `- Country: ${dossier.evidence.network.geo.country || "n/a"}`,
+    `- Region: ${dossier.evidence.network.geo.region || "n/a"}`,
+    `- City: ${dossier.evidence.network.geo.city || "n/a"}`,
+    `- ASN: ${dossier.evidence.network.geo.asn || "n/a"}`,
+    `- Org: ${dossier.evidence.network.geo.org || "n/a"}`,
+    `- ISP: ${dossier.evidence.network.geo.isp || "n/a"}`,
     "",
     "## Recommended Actions",
     actions || "- none",
@@ -155,6 +194,40 @@ function extractUrlParts(value) {
   } catch {
     return null;
   }
+}
+
+function extractNetworkContext(event) {
+  const headers = event.headers || {};
+  const forwardedFor = normalizeHeaderValue(event.x_forwarded_for || headers["x-forwarded-for"] || "");
+  const realIp = normalizeHeaderValue(event.x_real_ip || headers["x-real-ip"] || "");
+  const country =
+    normalizeHeaderValue(
+      event.waf_country ||
+        headers["cf-ipcountry"] ||
+        headers["x-country"] ||
+        headers["x-geo-country"] ||
+        ""
+    ) || "";
+  const region = normalizeHeaderValue(headers["x-region"] || headers["x-geo-region"] || "");
+  const city = normalizeHeaderValue(headers["x-city"] || headers["x-geo-city"] || "");
+  const asn = normalizeHeaderValue(headers["x-asn"] || headers["x-geo-asn"] || "");
+  const org = normalizeHeaderValue(headers["x-org"] || headers["x-geo-org"] || "");
+  const isp = normalizeHeaderValue(headers["x-isp"] || headers["x-geo-isp"] || "");
+
+  return {
+    remote_address: event.remote_address || "",
+    forwarded_for: forwardedFor,
+    real_ip: realIp,
+    geo: {
+      country,
+      region,
+      city,
+      asn,
+      org,
+      isp,
+      source: country || region || city || asn || org || isp ? "waf_headers" : "unavailable",
+    },
+  };
 }
 
 function readEvents() {
@@ -212,6 +285,7 @@ function buildDossier(event) {
     referrer_path: referrerParts ? referrerParts.pathname : "",
     campaign_token_present: Boolean(event.campaign_token),
     observed_at: event.received_at || event.timestamp || "",
+    network: extractNetworkContext(event),
   };
 
   const recommendedActions = [];
@@ -258,6 +332,10 @@ function buildDossier(event) {
       page_url: event.page_url || APP_ORIGIN,
       campaign_token_present: Boolean(event.campaign_token),
     },
+    operational_notes: [
+      "Use geo fields only when supplied by trusted WAF or edge headers.",
+      "Do not rely on geo alone for enforcement decisions.",
+    ],
   };
 }
 
@@ -431,6 +509,7 @@ const server = http.createServer(async (req, res) => {
         remote_address: req.socket.remoteAddress || "",
         user_agent_header: req.headers["user-agent"] || "",
         referer_header: req.headers.referer || "",
+        headers: extractTrustedHeaders(req),
       };
       const analysis = analyzeEvent(storedEvent);
       const dossier = buildDossier({
@@ -470,6 +549,7 @@ const server = http.createServer(async (req, res) => {
         remote_address: req.socket.remoteAddress || "",
         user_agent_header: req.headers["user-agent"] || "",
         referer_header: req.headers.referer || "",
+        headers: extractTrustedHeaders(req),
       };
       const analysis = analyzeEvent(loginEvent);
       const dossier = buildDossier({

@@ -96,6 +96,8 @@ Os dossiês exportados ficam em `data/dossiers/` como:
 - `<dossier_id>.json`
 - `<dossier_id>.md`
 
+Cada dossiê também pode incluir contexto de rede e geo quando o WAF fornecer cabeçalhos confiáveis, como IP encaminhado, país, região, cidade, ASN e organização.
+
 ## Estrutura
 
 - `src/`: implementação principal
