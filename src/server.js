@@ -8,6 +8,7 @@ const PORT = Number(process.env.PORT || 3003);
 const HOST = process.env.HOST || "127.0.0.1";
 const ROOT = path.join(__dirname, "official");
 const DATA_DIR = path.join(__dirname, "..", "data");
+const DOSSIERS_DIR = path.join(DATA_DIR, "dossiers");
 const EVENTS_FILE = path.join(DATA_DIR, "events.jsonl");
 const APP_ORIGIN = `http://${HOST}:${PORT}`;
 const APP_HOSTNAME = new URL(APP_ORIGIN).hostname;
@@ -59,6 +60,11 @@ function ensureDataDir() {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
+function ensureDossiersDir() {
+  ensureDataDir();
+  fs.mkdirSync(DOSSIERS_DIR, { recursive: true });
+}
+
 function readJson(req) {
   return new Promise((resolve, reject) => {
     const chunks = [];
@@ -78,6 +84,59 @@ function readJson(req) {
 function appendEvent(event) {
   ensureDataDir();
   fs.appendFileSync(EVENTS_FILE, `${JSON.stringify(event)}\n`, "utf8");
+}
+
+function dossierToMarkdown(dossier) {
+  const indicators = dossier.indicators
+    .map((indicator) => `- ${indicator.type}: ${indicator.value}`)
+    .join("\n");
+  const actions = dossier.recommended_actions.map((action) => `- ${action}`).join("\n");
+  const codes = dossier.indicator_codes.map((code) => `- ${code}`).join("\n");
+
+  return [
+    `# ${dossier.dossier_id}`,
+    "",
+    `- Created at: ${dossier.created_at}`,
+    `- Risk level: ${dossier.risk_level}`,
+    `- Score: ${dossier.score}`,
+    `- Summary: ${dossier.summary}`,
+    "",
+    "## Indicators",
+    indicators || "- none",
+    "",
+    "## Indicator Codes",
+    codes || "- none",
+    "",
+    "## Evidence",
+    `- Page origin: ${dossier.evidence.page_origin}`,
+    `- Page path: ${dossier.evidence.page_path}`,
+    `- Referrer origin: ${dossier.evidence.referrer_origin || "n/a"}`,
+    `- Referrer path: ${dossier.evidence.referrer_path || "n/a"}`,
+    `- Campaign token present: ${dossier.evidence.campaign_token_present}`,
+    `- Observed at: ${dossier.evidence.observed_at}`,
+    "",
+    "## Recommended Actions",
+    actions || "- none",
+    "",
+    "## Source Event",
+    `- Event type: ${dossier.source_event.event_type}`,
+    `- Received at: ${dossier.source_event.received_at}`,
+    `- Page URL: ${dossier.source_event.page_url}`,
+    `- Campaign token present: ${dossier.source_event.campaign_token_present}`,
+    "",
+  ].join("\n");
+}
+
+function writeDossierExports(dossier) {
+  ensureDossiersDir();
+  const jsonPath = path.join(DOSSIERS_DIR, `${dossier.dossier_id}.json`);
+  const mdPath = path.join(DOSSIERS_DIR, `${dossier.dossier_id}.md`);
+  fs.writeFileSync(jsonPath, `${JSON.stringify(dossier, null, 2)}\n`, "utf8");
+  fs.writeFileSync(mdPath, dossierToMarkdown(dossier), "utf8");
+  return {
+    json_path: path.relative(DATA_DIR, jsonPath),
+    markdown_path: path.relative(DATA_DIR, mdPath),
+  };
 }
 
 function isIPv4Hostname(hostname) {
@@ -374,11 +433,21 @@ const server = http.createServer(async (req, res) => {
         referer_header: req.headers.referer || "",
       };
       const analysis = analyzeEvent(storedEvent);
-      appendEvent({
+      const dossier = buildDossier({
         ...storedEvent,
         analysis,
       });
-      sendJson(res, 202, { ok: true, analysis });
+      const exportPaths =
+        getRiskRank(dossier.risk_level) >= getRiskRank("medium")
+          ? writeDossierExports(dossier)
+          : null;
+      appendEvent({
+        ...storedEvent,
+        analysis,
+        dossier,
+        export_paths: exportPaths,
+      });
+      sendJson(res, 202, { ok: true, analysis, dossier, export_paths: exportPaths });
     } catch (error) {
       sendJson(res, 400, { ok: false, error: "invalid_json" });
     }
@@ -402,11 +471,22 @@ const server = http.createServer(async (req, res) => {
         user_agent_header: req.headers["user-agent"] || "",
         referer_header: req.headers.referer || "",
       };
+      const analysis = analyzeEvent(loginEvent);
+      const dossier = buildDossier({
+        ...loginEvent,
+        analysis,
+      });
+      const exportPaths =
+        getRiskRank(dossier.risk_level) >= getRiskRank("medium")
+          ? writeDossierExports(dossier)
+          : null;
       appendEvent({
         ...loginEvent,
-        analysis: analyzeEvent(loginEvent),
+        analysis,
+        dossier,
+        export_paths: exportPaths,
       });
-      sendJson(res, 200, { ok: true });
+      sendJson(res, 200, { ok: true, analysis, dossier, export_paths: exportPaths });
     } catch (error) {
       sendJson(res, 400, { ok: false, error: "invalid_json" });
     }

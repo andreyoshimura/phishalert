@@ -88,6 +88,11 @@ Endpoints úteis:
 - `GET /api/cases`
 - `GET /api/dossiers?min_risk=medium`
 
+Os dossiês exportados ficam em `data/dossiers/` como:
+
+- `<dossier_id>.json`
+- `<dossier_id>.md`
+
 ## Estrutura
 
 - `src/`: implementação principal

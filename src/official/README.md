@@ -6,7 +6,7 @@ Arquivos:
 
 - `index.html`: página oficial simples
 - `collector.js`: snippet que captura sinais básicos e tenta enviar um evento para `/api/events`
-- `../server.js`: servidor local para servir a página, receber eventos e expor `GET /api/cases` e `GET /api/dossiers`
+- `../server.js`: servidor local para servir a página, receber eventos e exportar dossiês em JSON/Markdown
 
 ## Evento capturado
 
