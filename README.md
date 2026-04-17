@@ -50,6 +50,18 @@ O primeiro recorte do projeto vai focar em:
 - regra simples de correlação por token, `referrer` e IP
 - alerta básico quando um redirecionamento suspeito for identificado
 
+## Rodando localmente
+
+```bash
+node src/server.js
+```
+
+Abra:
+
+```text
+http://localhost:3001
+```
+
 ## Estrutura
 
 - `src/`: implementação principal

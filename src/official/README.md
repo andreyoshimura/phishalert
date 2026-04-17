@@ -6,6 +6,7 @@ Arquivos:
 
 - `index.html`: página oficial simples
 - `collector.js`: snippet que captura sinais básicos e tenta enviar um evento para `/api/events`
+- `../server.js`: servidor local para servir a página e receber eventos
 
 ## Evento capturado
 
@@ -21,3 +22,15 @@ O snippet registra:
 - timestamp ISO
 
 Se o endpoint ainda não existir, o payload é mantido em `window.__PHISHALERT__` e tentado com `fetch` de forma segura.
+
+## Execução local
+
+```bash
+node src/server.js
+```
+
+Depois abra:
+
+```text
+http://localhost:3001
+```
