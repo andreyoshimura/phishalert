@@ -6,6 +6,7 @@
 - Definir formato do evento
 - Criar estrutura de API
 - Criar armazenamento inicial
+- Garantir compatibilidade com WAF, SAST e postura de cloud
 
 ## Fase 2 - Captura
 
@@ -25,6 +26,12 @@
 - Gerar evidência técnica
 - Registrar histórico do caso
 
+## Fase 4b - Dossiê Seguro
+
+- Gerar dossiê JSON de takedown
+- Remover dados sensíveis do payload
+- Tornar o dossiê fácil de inspecionar por auditoria
+
 ## Fase 5 - Takedown
 
 - Criar pacote de evidências
@@ -36,4 +43,4 @@
 - Dashboard de casos
 - Regras de supressão e safelist
 - Métricas de taxa de detecção e tempo de resposta
-
+- Revisão periódica com times de WAF, AppSec e CloudSec

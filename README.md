@@ -40,6 +40,23 @@ O sistema será dividido em quatro partes:
    - envia alertas para e-mail, Slack, SIEM ou fila interna
    - cria dossiê para takedown
 
+## Ambiente-alvo
+
+Este projeto foi pensado para rodar em um ambiente que já usa camadas corporativas de segurança, incluindo:
+
+- `Imperva` na borda/WAF
+- `Veracode` no ciclo de análise de código
+- `Wiz` para postura e inventário de risco em cloud/infra
+
+O desenho do `phishalert` precisa permanecer compatível com esse cenário:
+
+- rotas mínimas e previsíveis
+- payloads pequenos e com schema estável
+- sem captura de credenciais
+- sem dependências desnecessárias
+- sem segredos no repositório
+- fácil de revisar por SAST, DAST e scanners de infra
+
 ## MVP inicial
 
 O primeiro recorte do projeto vai focar em:
@@ -69,6 +86,7 @@ Endpoints úteis:
 - `POST /api/events`
 - `GET /api/events`
 - `GET /api/cases`
+- `GET /api/dossiers?min_risk=medium`
 
 ## Estrutura
 

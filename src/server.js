@@ -1,4 +1,5 @@
 const http = require("node:http");
+const crypto = require("node:crypto");
 const fs = require("node:fs");
 const path = require("node:path");
 const url = require("node:url");
@@ -48,6 +49,12 @@ const MIME_TYPES = {
   ".ico": "image/x-icon",
 };
 
+const RISK_ORDER = {
+  low: 0,
+  medium: 1,
+  high: 2,
+};
+
 function ensureDataDir() {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
@@ -89,6 +96,110 @@ function extractUrlParts(value) {
   } catch {
     return null;
   }
+}
+
+function readEvents() {
+  if (!fs.existsSync(EVENTS_FILE)) {
+    return [];
+  }
+
+  const raw = fs.readFileSync(EVENTS_FILE, "utf8");
+  return raw
+    .split("\n")
+    .filter(Boolean)
+    .map((line) => JSON.parse(line));
+}
+
+function getRiskRank(riskLevel) {
+  return RISK_ORDER[riskLevel] ?? 0;
+}
+
+function buildDossier(event) {
+  const analysis = event.analysis || analyzeEvent(event);
+  const referrerParts = extractUrlParts(event.referrer || event.referer_header || "");
+  const pageParts = extractUrlParts(event.page_url || APP_ORIGIN);
+  const indicatorSet = new Set(analysis.reasons);
+
+  const indicators = [];
+  if (referrerParts) {
+    indicators.push({
+      type: "referrer_origin",
+      value: referrerParts.origin,
+    });
+    indicators.push({
+      type: "referrer_path",
+      value: referrerParts.pathname,
+    });
+  }
+
+  if (event.campaign_token) {
+    indicators.push({
+      type: "campaign_token_present",
+      value: true,
+    });
+  }
+
+  if (event.user_agent_header || event.user_agent) {
+    indicators.push({
+      type: "user_agent",
+      value: event.user_agent_header || event.user_agent,
+    });
+  }
+
+  const evidence = {
+    page_origin: pageParts ? pageParts.origin : event.page_url || APP_ORIGIN,
+    page_path: pageParts ? pageParts.pathname : "/",
+    referrer_origin: referrerParts ? referrerParts.origin : "",
+    referrer_path: referrerParts ? referrerParts.pathname : "",
+    campaign_token_present: Boolean(event.campaign_token),
+    observed_at: event.received_at || event.timestamp || "",
+  };
+
+  const recommendedActions = [];
+  if (analysis.risk_level === "high") {
+    recommendedActions.push("open_takedown_case");
+    recommendedActions.push("notify_waf_and_brand_protection");
+  } else if (analysis.risk_level === "medium") {
+    recommendedActions.push("collect_additional_evidence");
+    recommendedActions.push("continue_monitoring");
+  } else {
+    recommendedActions.push("keep_under_watch");
+  }
+
+  return {
+    dossier_id: `dossier_${crypto
+      .createHash("sha256")
+      .update(
+        JSON.stringify({
+          page_url: event.page_url || APP_ORIGIN,
+          referrer: event.referrer || event.referer_header || "",
+          received_at: event.received_at || event.timestamp || "",
+          risk_level: analysis.risk_level,
+          score: analysis.score,
+        })
+      )
+      .digest("hex")
+      .slice(0, 16)}`,
+    created_at: new Date().toISOString(),
+    risk_level: analysis.risk_level,
+    score: analysis.score,
+    summary:
+      analysis.risk_level === "high"
+        ? "High-risk redirect or impersonation event"
+        : analysis.risk_level === "medium"
+          ? "Suspicious event requiring follow-up"
+          : "Low-risk event",
+    indicators,
+    indicator_codes: Array.from(indicatorSet),
+    evidence,
+    recommended_actions: recommendedActions,
+    source_event: {
+      event_type: event.event_type,
+      received_at: event.received_at || event.timestamp || "",
+      page_url: event.page_url || APP_ORIGIN,
+      campaign_token_present: Boolean(event.campaign_token),
+    },
+  };
 }
 
 function analyzeEvent(event) {
@@ -212,11 +323,7 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "GET" && parsed.pathname === "/api/events") {
     try {
-      const raw = fs.existsSync(EVENTS_FILE) ? fs.readFileSync(EVENTS_FILE, "utf8") : "";
-      const events = raw
-        .split("\n")
-        .filter(Boolean)
-        .map((line) => JSON.parse(line));
+      const events = readEvents();
       sendJson(res, 200, { events });
     } catch (error) {
       sendJson(res, 500, { error: "failed_to_read_events" });
@@ -226,11 +333,7 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "GET" && parsed.pathname === "/api/cases") {
     try {
-      const raw = fs.existsSync(EVENTS_FILE) ? fs.readFileSync(EVENTS_FILE, "utf8") : "";
-      const events = raw
-        .split("\n")
-        .filter(Boolean)
-        .map((line) => JSON.parse(line));
+      const events = readEvents();
       const cases = events.map((event) => ({
         ...event,
         analysis: analyzeEvent(event),
@@ -238,6 +341,24 @@ const server = http.createServer(async (req, res) => {
       sendJson(res, 200, { cases });
     } catch (error) {
       sendJson(res, 500, { error: "failed_to_read_cases" });
+    }
+    return;
+  }
+
+  if (req.method === "GET" && parsed.pathname === "/api/dossiers") {
+    try {
+      const minRisk = String(parsed.query.min_risk || "low").toLowerCase();
+      const minRank = getRiskRank(minRisk);
+      const dossiers = readEvents()
+        .map((event) => ({
+          ...event,
+          analysis: analyzeEvent(event),
+        }))
+        .filter((event) => getRiskRank(event.analysis.risk_level) >= minRank)
+        .map((event) => buildDossier(event));
+      sendJson(res, 200, { dossiers });
+    } catch (error) {
+      sendJson(res, 500, { error: "failed_to_build_dossiers" });
     }
     return;
   }

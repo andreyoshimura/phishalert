@@ -11,6 +11,18 @@ Este repositório implementa um sistema de detecção e resposta para páginas d
 - Disparar alerta quando houver evidência de redirecionamento malicioso
 - Preparar material para takedown
 
+## Restrições de segurança
+
+O projeto precisa ser compatível com um ambiente já protegido por `Imperva`, `Veracode` e `Wiz`.
+
+- Não coletar senha, token de autenticação ou qualquer credencial.
+- Não adicionar dependências sem necessidade clara.
+- Manter o schema dos eventos estável e pequeno.
+- Preferir rotas explícitas e previsíveis.
+- Evitar lógica dinâmica, `eval`, ou padrões que compliquem SAST.
+- Não embutir segredos, chaves ou endpoints privados no código.
+- Presumir que o endpoint pode ficar atrás de WAF, rate limit e inspeção de tráfego.
+
 ## Regras de trabalho
 
 - Não assumir que `referrer` estará sempre presente.
@@ -32,4 +44,3 @@ Este repositório implementa um sistema de detecção e resposta para páginas d
 3. Criar o snippet do site oficial
 4. Implementar correlação básica
 5. Adicionar alerta e dossiê
-
