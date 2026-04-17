@@ -87,6 +87,12 @@ Endpoints úteis:
 
 Veja o guia completo em [doc/como configurar](./doc/como%20configurar.md).
 
+## Implantação Rápida
+
+1. Troque `ENDPOINT` pelo backend do `phishalert`.
+2. Cole o snippet no `head` da página oficial de login.
+3. Abra a página e confirme `POST /api/events` no DevTools.
+
 Os dossiês exportados ficam em `data/dossiers/` como:
 
 - `<dossier_id>.json`
