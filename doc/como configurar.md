@@ -1,0 +1,80 @@
+# Como Configurar
+
+Este documento traz o snippet mínimo para colar no `head` da página oficial.
+
+## Objetivo
+
+- Registrar apenas `page_view`
+- Capturar sinais básicos de origem
+- Evitar dependências externas
+- Manter fácil implantação em ambientes protegidos por WAF
+
+## Snippet Final
+
+```html
+<script>
+  (() => {
+    const ENDPOINT = "/api/events";
+
+    function getToken() {
+      try {
+        return new URL(window.location.href).searchParams.get("token") || "";
+      } catch {
+        return "";
+      }
+    }
+
+    function send(payload) {
+      const body = JSON.stringify(payload);
+      const blob = new Blob([body], { type: "application/json" });
+      if (navigator.sendBeacon && navigator.sendBeacon(ENDPOINT, blob)) return;
+      fetch(ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+        keepalive: true,
+      }).catch(() => {});
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      send({
+        event_type: "official_page_view",
+        page_url: window.location.href,
+        referrer: document.referrer || "",
+        campaign_token: getToken(),
+        user_agent: navigator.userAgent || "",
+        language: navigator.language || "",
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "",
+        timestamp: new Date().toISOString(),
+      });
+    });
+  })();
+</script>
+```
+
+## Onde Colar
+
+- No `head` da página oficial
+- Antes do fechamento de `</head>`
+- Sem importar bibliotecas externas
+
+## O Que O Snippet Envia
+
+- URL atual
+- `document.referrer`
+- token opcional em `?token=...`
+- user-agent
+- idioma
+- timezone
+- timestamp ISO
+
+## Endpoint
+
+- `POST /api/events`
+
+## Observações
+
+- O snippet foi mantido propositalmente pequeno.
+- Ele não coleta senha nem dados de formulário.
+- A página pode continuar funcionando mesmo se o endpoint ainda não estiver disponível.
+
