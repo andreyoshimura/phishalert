@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PhishAlert - Página Oficial</title>
+    <meta
+      name="description"
+      content="Página oficial local do projeto PhishAlert para testes de detecção e correlação de phishing."
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f4f7fb;
+        --panel: #ffffff;
+        --text: #102033;
+        --muted: #5d6b7c;
+        --accent: #0b5fff;
+        --border: #d9e2ef;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: var(--bg);
+        color: var(--text);
+        font-family: Arial, Helvetica, sans-serif;
+      }
+
+      body {
+        display: grid;
+        place-items: center;
+        padding: 24px;
+      }
+
+      .card {
+        width: min(560px, 100%);
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 28px;
+      }
+
+      .title {
+        margin: 0 0 10px;
+        font-size: 1.8rem;
+        line-height: 1.1;
+      }
+
+      .label {
+        display: inline-block;
+        margin-bottom: 14px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #e9f0ff;
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      p {
+        margin: 0 0 12px;
+        line-height: 1.6;
+        color: var(--muted);
+      }
+
+      .note {
+        margin-top: 18px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border);
+        font-size: 0.95rem;
+        color: var(--muted);
+      }
+    </style>
+    <script defer src="./collector.js"></script>
+  </head>
+  <body>
+    <main class="card">
+      <div class="label">Página Oficial</div>
+      <h1 class="title">PhishAlert</h1>
+      <p>Ambiente oficial local para testes de captura de sinais.</p>
+      <p>
+        Se um redirecionamento suspeito cair aqui, a página registra origem,
+        contexto e dados técnicos do acesso.
+      </p>
+      <div class="note">Página oficial ativa para testes.</div>
+    </main>
+  </body>
+</html>
