@@ -68,7 +68,7 @@ O primeiro recorte do projeto vai focar em:
 - alerta básico quando um redirecionamento suspeito for identificado
 - endpoint de casos correlacionados com score de risco
 - heurísticas de origem suspeita por domínio, TLD e padrão de redirect
-- snippet único e fácil de colar no `head` da página oficial
+- snippet único e fácil de colar no `head` da página oficial, focado em `page_view`
 
 ## Rodando localmente
 

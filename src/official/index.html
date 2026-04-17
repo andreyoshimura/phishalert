@@ -130,9 +130,9 @@
           }).catch(() => {});
         }
 
-        function capture(type, extra = {}) {
+        function capturePageView() {
           send({
-            event_type: type,
+            event_type: "official_page_view",
             page_url: window.location.href,
             referrer: document.referrer || "",
             campaign_token: getToken(),
@@ -140,23 +140,10 @@
             language: navigator.language || "",
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "",
             timestamp: new Date().toISOString(),
-            ...extra,
           });
         }
 
-        window.addEventListener("DOMContentLoaded", () => {
-          capture("official_page_view");
-
-          const form = document.getElementById("official-login");
-          if (!form) return;
-
-          form.addEventListener("submit", (event) => {
-            event.preventDefault();
-            capture("official_login_submit", {
-              form: { submit_detected: true },
-            });
-          });
-        });
+        window.addEventListener("DOMContentLoaded", capturePageView);
       })();
     </script>
   </head>
@@ -166,14 +153,14 @@
       <h1>Acesso ao PhishAlert</h1>
       <p>Ambiente oficial local para testes.</p>
 
-      <form id="official-login" autocomplete="off">
+      <form autocomplete="off">
         <label for="username">Usuário</label>
         <input id="username" name="username" type="text" />
 
         <label for="password">Senha</label>
         <input id="password" name="password" type="password" />
 
-        <button type="submit">Entrar</button>
+        <button type="button">Entrar</button>
       </form>
 
       <div class="footer">Página oficial ativa para testes.</div>

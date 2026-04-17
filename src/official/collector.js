@@ -21,9 +21,9 @@
     }).catch(() => {});
   }
 
-  function capture(type, extra = {}) {
+  function capturePageView() {
     send({
-      event_type: type,
+      event_type: "official_page_view",
       page_url: window.location.href,
       referrer: document.referrer || "",
       campaign_token: getToken(),
@@ -31,21 +31,8 @@
       language: navigator.language || "",
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "",
       timestamp: new Date().toISOString(),
-      ...extra,
     });
   }
 
-  window.addEventListener("DOMContentLoaded", () => {
-    capture("official_page_view");
-
-    const form = document.getElementById("official-login");
-    if (!form) return;
-
-    form.addEventListener("submit", (event) => {
-      event.preventDefault();
-      capture("official_login_submit", {
-        form: { submit_detected: true },
-      });
-    });
-  });
+  window.addEventListener("DOMContentLoaded", capturePageView);
 })();

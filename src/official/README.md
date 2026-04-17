@@ -18,7 +18,6 @@ O snippet registra:
 - user-agent
 - idioma
 - timezone
-- dimensões de tela e viewport
 - timestamp ISO
 
 Se o endpoint ainda não existir, o payload é mantido em `window.__PHISHALERT__` e tentado com `fetch` de forma segura.
