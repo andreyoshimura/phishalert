@@ -81,6 +81,8 @@ Este documento traz o snippet mínimo para colar no `head` da página oficial.
 
 ## Implantação Em Produção
 
-1. Configure o `ENDPOINT` do snippet para o backend que vai receber os eventos.
+Checklist rápido:
+
+1. Troque `ENDPOINT` pelo backend do `phishalert`.
 2. Cole o snippet no `head` da página oficial de login.
-3. Abra a página e confirme a chamada `POST /api/events` no navegador.
+3. Abra a página e confirme `POST /api/events` no DevTools.
