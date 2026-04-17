@@ -86,6 +86,7 @@ Endpoints úteis:
 - `GET /api/dossiers?min_risk=medium`
 
 Veja o guia completo em [doc/como configurar](./doc/como%20configurar.md).
+Veja também a análise de mercado em [docs/market-analysis](./docs/market-analysis.md).
 
 ## Implantação Rápida
 
