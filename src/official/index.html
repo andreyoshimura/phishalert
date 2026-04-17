@@ -4,19 +4,16 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>PhishAlert - Acesso Oficial</title>
-    <meta
-      name="description"
-      content="Página oficial local do projeto PhishAlert para testes de captura de sinais e correlação de phishing."
-    />
+    <meta name="description" content="Página oficial local do PhishAlert." />
     <style>
       :root {
         color-scheme: light;
-        --bg: #f4f7fb;
-        --panel: #ffffff;
+        --bg: #f5f7fb;
+        --panel: #fff;
         --text: #102033;
-        --muted: #5d6b7c;
-        --accent: #0b5fff;
+        --muted: #5f6d7c;
         --border: #d9e2ef;
+        --accent: #0b5fff;
       }
 
       * {
@@ -38,28 +35,15 @@
         padding: 24px;
       }
 
-      .shell {
-        width: min(980px, 100%);
-        display: grid;
-        grid-template-columns: 1.2fr 0.8fr;
-        gap: 18px;
-      }
-
       .card {
-        width: 100%;
+        width: min(460px, 100%);
         background: var(--panel);
         border: 1px solid var(--border);
         border-radius: 16px;
         padding: 28px;
       }
 
-      .title {
-        margin: 0 0 10px;
-        font-size: 1.8rem;
-        line-height: 1.1;
-      }
-
-      .label {
+      .badge {
         display: inline-block;
         margin-bottom: 14px;
         padding: 6px 10px;
@@ -71,63 +55,41 @@
         text-transform: uppercase;
       }
 
+      h1 {
+        margin: 0 0 8px;
+        font-size: 1.9rem;
+        line-height: 1.1;
+      }
+
       p {
-        margin: 0 0 12px;
+        margin: 0 0 18px;
+        color: var(--muted);
         line-height: 1.6;
-        color: var(--muted);
       }
 
-      .note {
-        margin-top: 18px;
-        padding-top: 16px;
-        border-top: 1px solid var(--border);
-        font-size: 0.95rem;
-        color: var(--muted);
-      }
-
-      .login-title {
-        margin: 12px 0 8px;
-        font-size: 2.2rem;
-        line-height: 1.05;
-      }
-
-      .login-form {
-        display: grid;
-        gap: 12px;
-        margin-top: 20px;
-      }
-
-      .field label {
+      label {
         display: block;
         margin-bottom: 6px;
         font-size: 0.93rem;
         font-weight: 700;
       }
 
-      .field input {
+      input {
         width: 100%;
         border: 1px solid var(--border);
         border-radius: 10px;
         padding: 14px 12px;
+        margin-bottom: 12px;
         font: inherit;
-        background: #fff;
-        color: var(--text);
       }
 
-      .field input:focus {
+      input:focus {
         outline: 2px solid #cfe0ff;
         border-color: #9ab7ff;
       }
 
-      .actions {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        margin-top: 6px;
-      }
-
-      .btn {
+      button {
+        width: 100%;
         border: 0;
         border-radius: 10px;
         padding: 14px 18px;
@@ -138,70 +100,83 @@
         cursor: pointer;
       }
 
-      .helper {
-        font-size: 0.9rem;
+      .footer {
+        margin-top: 16px;
+        font-size: 0.92rem;
         color: var(--muted);
       }
-
-      .side {
-        background: linear-gradient(180deg, #0b5fff 0%, #093d9b 100%);
-        color: #fff;
-      }
-
-      .side p {
-        color: rgba(255, 255, 255, 0.84);
-      }
-
-      .side .note {
-        border-color: rgba(255, 255, 255, 0.2);
-      }
-
-      @media (max-width: 760px) {
-        .shell {
-          grid-template-columns: 1fr;
-        }
-      }
     </style>
-    <script defer src="./collector.js"></script>
+    <script>
+      (() => {
+        const ENDPOINT = "/api/events";
+
+        function getToken() {
+          try {
+            return new URL(window.location.href).searchParams.get("token") || "";
+          } catch {
+            return "";
+          }
+        }
+
+        function send(payload) {
+          const body = JSON.stringify(payload);
+          const blob = new Blob([body], { type: "application/json" });
+          if (navigator.sendBeacon && navigator.sendBeacon(ENDPOINT, blob)) return;
+          fetch(ENDPOINT, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body,
+            keepalive: true,
+          }).catch(() => {});
+        }
+
+        function capture(type, extra = {}) {
+          send({
+            event_type: type,
+            page_url: window.location.href,
+            referrer: document.referrer || "",
+            campaign_token: getToken(),
+            user_agent: navigator.userAgent || "",
+            language: navigator.language || "",
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "",
+            timestamp: new Date().toISOString(),
+            ...extra,
+          });
+        }
+
+        window.addEventListener("DOMContentLoaded", () => {
+          capture("official_page_view");
+
+          const form = document.getElementById("official-login");
+          if (!form) return;
+
+          form.addEventListener("submit", (event) => {
+            event.preventDefault();
+            capture("official_login_submit", {
+              form: { submit_detected: true },
+            });
+          });
+        });
+      })();
+    </script>
   </head>
   <body>
-    <main class="shell">
-      <section class="card">
-        <div class="label">Página Oficial</div>
-        <h1 class="login-title">Acesso ao PhishAlert</h1>
-        <p>Use seu acesso oficial para continuar.</p>
+    <main class="card">
+      <div class="badge">Página Oficial</div>
+      <h1>Acesso ao PhishAlert</h1>
+      <p>Ambiente oficial local para testes.</p>
 
-        <form class="login-form" id="official-login" autocomplete="off">
-          <div class="field">
-            <label for="username">Usuário</label>
-            <input id="username" name="username" type="text" inputmode="email" />
-          </div>
-          <div class="field">
-            <label for="password">Senha</label>
-            <input id="password" name="password" type="password" />
-          </div>
-          <div class="actions">
-            <button class="btn" type="submit">Entrar</button>
-            <span class="helper">Ambiente local de testes</span>
-          </div>
-        </form>
+      <form id="official-login" autocomplete="off">
+        <label for="username">Usuário</label>
+        <input id="username" name="username" type="text" />
 
-        <div class="note">Página oficial ativa para testes.</div>
-      </section>
+        <label for="password">Senha</label>
+        <input id="password" name="password" type="password" />
 
-      <aside class="card side">
-        <div class="label">Monitoramento</div>
-        <h2 class="title">Captura de sinais</h2>
-        <p>
-          Esta tela registra origem, `referrer`, horário, `user-agent`, token
-          de campanha e contexto do acesso.
-        </p>
-        <p>
-          Se um redirect malicioso cair aqui, o evento é enviado ao endpoint
-          local para correlação e alerta.
-        </p>
-        <div class="note">Foco no fluxo de login legítimo.</div>
-      </aside>
+        <button type="submit">Entrar</button>
+      </form>
+
+      <div class="footer">Página oficial ativa para testes.</div>
     </main>
   </body>
 </html>

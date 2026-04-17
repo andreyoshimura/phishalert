@@ -5,7 +5,7 @@ Esta pasta contém a versão local da página oficial usada para testes do `phis
 Arquivos:
 
 - `index.html`: página oficial simples
-- `collector.js`: snippet que captura sinais básicos e tenta enviar um evento para `/api/events`
+- `collector.js`: referência de snippet, equivalente ao código inline do `head`
 - `../server.js`: servidor local para servir a página, receber eventos e exportar dossiês em JSON/Markdown
 
 ## Evento capturado
@@ -22,6 +22,10 @@ O snippet registra:
 - timestamp ISO
 
 Se o endpoint ainda não existir, o payload é mantido em `window.__PHISHALERT__` e tentado com `fetch` de forma segura.
+
+## Formato recomendado
+
+O ideal é colar o snippet diretamente no `head` da página oficial, sem dependências externas. Isso reduz atrito de implantação e combina melhor com páginas corporativas já protegidas por WAF.
 
 ## Execução local
 
