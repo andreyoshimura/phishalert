@@ -78,3 +78,9 @@ Este documento traz o snippet mínimo para colar no `head` da página oficial.
 - Ele não coleta senha nem dados de formulário.
 - A página continua funcionando mesmo se o endpoint ainda não estiver disponível.
 - Se você quiser implantar em produção, normalmente basta colar o snippet no `head` e apontar o `ENDPOINT` para o backend do `phishalert`.
+
+## Implantação Em Produção
+
+1. Configure o `ENDPOINT` do snippet para o backend que vai receber os eventos.
+2. Cole o snippet no `head` da página oficial de login.
+3. Abra a página e confirme a chamada `POST /api/events` no navegador.
