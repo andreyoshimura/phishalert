@@ -50,6 +50,7 @@ O primeiro recorte do projeto vai focar em:
 - regra simples de correlação por token, `referrer` e IP
 - alerta básico quando um redirecionamento suspeito for identificado
 - endpoint de casos correlacionados com score de risco
+- heurísticas de origem suspeita por domínio, TLD e padrão de redirect
 
 ## Rodando localmente
 

@@ -9,6 +9,31 @@ const ROOT = path.join(__dirname, "official");
 const DATA_DIR = path.join(__dirname, "..", "data");
 const EVENTS_FILE = path.join(DATA_DIR, "events.jsonl");
 const APP_ORIGIN = `http://${HOST}:${PORT}`;
+const APP_HOSTNAME = new URL(APP_ORIGIN).hostname;
+const SUSPICIOUS_TLDS = [
+  ".click",
+  ".club",
+  ".cyou",
+  ".gq",
+  ".ga",
+  ".loan",
+  ".ml",
+  ".tk",
+  ".top",
+  ".xyz",
+];
+const SUSPICIOUS_HOST_KEYWORDS = [
+  "auth",
+  "bank",
+  "login",
+  "portal",
+  "secure",
+  "session",
+  "signin",
+  "support",
+  "update",
+  "verify",
+];
 
 const MIME_TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -48,29 +73,68 @@ function appendEvent(event) {
   fs.appendFileSync(EVENTS_FILE, `${JSON.stringify(event)}\n`, "utf8");
 }
 
+function isIPv4Hostname(hostname) {
+  return /^\d{1,3}(?:\.\d{1,3}){3}$/.test(hostname);
+}
+
+function extractUrlParts(value) {
+  if (!value) return null;
+  try {
+    const parsed = new URL(value);
+    return {
+      origin: parsed.origin,
+      hostname: parsed.hostname.toLowerCase(),
+      pathname: parsed.pathname || "/",
+    };
+  } catch {
+    return null;
+  }
+}
+
 function analyzeEvent(event) {
   const reasons = [];
   let score = 0;
   let riskLevel = "low";
+  const effectiveReferrer = event.referrer || event.referer_header || "";
+  const referrerParts = extractUrlParts(effectiveReferrer);
 
   if (
     event.event_type === "official_page_view" ||
     event.event_type === "official_login_submit" ||
     event.event_type === "official_login_post"
   ) {
-    if (!event.referrer) {
+    if (!effectiveReferrer) {
       reasons.push("referrer_absente");
       score += 25;
+    } else if (!referrerParts) {
+      reasons.push("referrer_invalido");
+      score += 20;
     } else {
-      try {
-        const referrerOrigin = new URL(event.referrer).origin;
-        if (referrerOrigin !== APP_ORIGIN) {
-          reasons.push("referrer_externo");
-          score += 40;
-        }
-      } catch {
-        reasons.push("referrer_invalido");
+      if (referrerParts.hostname !== APP_HOSTNAME) {
+        reasons.push("referrer_externo");
         score += 20;
+
+        if (isIPv4Hostname(referrerParts.hostname)) {
+          reasons.push("origin_ip");
+          score += 15;
+        }
+
+        if (SUSPICIOUS_TLDS.some((tld) => referrerParts.hostname.endsWith(tld))) {
+          reasons.push("origin_tld_suspeito");
+          score += 15;
+        }
+
+        if (
+          SUSPICIOUS_HOST_KEYWORDS.some((keyword) => referrerParts.hostname.includes(keyword))
+        ) {
+          reasons.push("origin_keyword_suspeito");
+          score += 20;
+        }
+
+        if (/\/(go|redirect|redir|out|auth|login)\b/i.test(referrerParts.pathname)) {
+          reasons.push("origin_path_redirect");
+          score += 10;
+        }
       }
     }
 
@@ -214,6 +278,8 @@ const server = http.createServer(async (req, res) => {
         },
         received_at: new Date().toISOString(),
         remote_address: req.socket.remoteAddress || "",
+        user_agent_header: req.headers["user-agent"] || "",
+        referer_header: req.headers.referer || "",
       };
       appendEvent({
         ...loginEvent,
