@@ -3,7 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const url = require("node:url");
 
-const PORT = Number(process.env.PORT || 3001);
+const PORT = Number(process.env.PORT || 3003);
 const HOST = process.env.HOST || "127.0.0.1";
 const ROOT = path.join(__dirname, "official");
 const DATA_DIR = path.join(__dirname, "..", "data");

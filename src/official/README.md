@@ -32,5 +32,5 @@ node src/server.js
 Depois abra:
 
 ```text
-http://localhost:3001
+http://localhost:3003
 ```
