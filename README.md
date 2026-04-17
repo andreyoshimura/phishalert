@@ -49,6 +49,7 @@ O primeiro recorte do projeto vai focar em:
 - armazenamento de eventos e evidências
 - regra simples de correlação por token, `referrer` e IP
 - alerta básico quando um redirecionamento suspeito for identificado
+- endpoint de casos correlacionados com score de risco
 
 ## Rodando localmente
 
@@ -61,6 +62,12 @@ Abra:
 ```text
 http://localhost:3003
 ```
+
+Endpoints úteis:
+
+- `POST /api/events`
+- `GET /api/events`
+- `GET /api/cases`
 
 ## Estrutura
 
