@@ -7,7 +7,7 @@ Este documento traz o snippet mínimo para colar no `head` da página oficial.
 - Registrar apenas `page_view`
 - Capturar sinais básicos de origem
 - Evitar dependências externas
-- Manter fácil implantação em ambientes protegidos por WAF
+- Permitir implantação rápida colando um único snippet no `head`
 
 ## Snippet Final
 
@@ -76,5 +76,5 @@ Este documento traz o snippet mínimo para colar no `head` da página oficial.
 
 - O snippet foi mantido propositalmente pequeno.
 - Ele não coleta senha nem dados de formulário.
-- A página pode continuar funcionando mesmo se o endpoint ainda não estiver disponível.
-
+- A página continua funcionando mesmo se o endpoint ainda não estiver disponível.
+- Se você quiser implantar em produção, normalmente basta colar o snippet no `head` e apontar o `ENDPOINT` para o backend do `phishalert`.

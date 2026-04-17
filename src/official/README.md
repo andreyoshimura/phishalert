@@ -24,7 +24,7 @@ Se o endpoint ainda não existir, o payload é mantido em `window.__PHISHALERT__
 
 ## Formato recomendado
 
-O ideal é colar o snippet diretamente no `head` da página oficial, sem dependências externas. Isso reduz atrito de implantação e combina melhor com páginas corporativas já protegidas por WAF.
+O ideal é colar o snippet diretamente no `head` da página oficial, sem dependências externas. Isso reduz atrito de implantação e facilita vender/ativar o recurso como uma mudança simples no lado do cliente.
 
 O snippet pronto está em [doc/como configurar](../../doc/como%20configurar.md).
 

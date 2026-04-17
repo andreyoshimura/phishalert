@@ -42,26 +42,22 @@ O sistema será dividido em quatro partes:
 
 ## Ambiente-alvo
 
-Este projeto foi pensado para rodar em um ambiente que já usa camadas corporativas de segurança, incluindo:
+O `phishalert` foi desenhado para ser implantado sem mexer na borda do site.
 
-- `Imperva` na borda/WAF
-- `Veracode` no ciclo de análise de código
-- `Wiz` para postura e inventário de risco em cloud/infra
+O padrão de adoção é:
 
-O desenho do `phishalert` precisa permanecer compatível com esse cenário:
+- colar um snippet pequeno no `head` da página oficial
+- enviar apenas metadados básicos de navegação
+- evitar captura de credenciais
+- manter o backend simples e previsível
 
-- rotas mínimas e previsíveis
-- payloads pequenos e com schema estável
-- sem captura de credenciais
-- sem dependências desnecessárias
-- sem segredos no repositório
-- fácil de revisar por SAST, DAST e scanners de infra
+Ele continua compatível com ambientes que usam ferramentas de segurança como `Veracode` e `Wiz`, mas isso não é um requisito para a implantação.
 
 ## MVP inicial
 
 O primeiro recorte do projeto vai focar em:
 
-- snippet leve para a página oficial
+- snippet leve para a página oficial, colado diretamente no `head`
 - endpoint para receber eventos
 - armazenamento de eventos e evidências
 - regra simples de correlação por token, `referrer` e IP
@@ -97,6 +93,7 @@ Os dossiês exportados ficam em `data/dossiers/` como:
 - `<dossier_id>.md`
 
 Cada dossiê também pode incluir contexto de rede e geo quando o WAF fornecer cabeçalhos confiáveis, como IP encaminhado, país, região, cidade, ASN e organização.
+Esse contexto é opcional; o produto continua funcionando só com os sinais do navegador.
 
 ## Estrutura
 
